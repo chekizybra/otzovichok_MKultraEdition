@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход</title>
+  <link rel="stylesheet" href="style/login.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="title">Вход</div>
+    <div class="subtitle">Введите почту и пароль, чтобы зайти в аккаунт</div>
+
+    <div class="form">
+      <div>
+        <div class="label">Почта</div>
+        <input class="input" type="email" id="mail" placeholder="Введите почту">
+      </div>
+
+      <div>
+        <div class="label">Пароль</div>
+        <input class="input" type="password" id="pasword" placeholder="Введите пароль">
+      </div>
+
+      <button class="btn" onclick="login()">Войти</button>
+
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="links">
+      <a href="index.html">На главную</a>
+      <a href="register.html">Нет аккаунта? Регистрация</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function login() {
+      const msg = document.getElementById("msg");
+      msg.innerText = "";
+
+      const mail = document.getElementById("mail").value.trim();
+      const pasword = document.getElementById("pasword").value;
+
+      if (!mail || !pasword) {
+          msg.innerText = "Заполните все поля";
+          return;
+      }
+
+      const body = new URLSearchParams();
+      body.append("username", mail);
+      body.append("password", pasword);
+
+      try {
+          const res = await fetch("http://localhost:8080/auth/login", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/x-www-form-urlencoded"
+              },
+              credentials: "include",
+              body: body
+          });
+
+          const text = await res.text();
+          msg.innerText = text || (res.ok ? "Успешный вход" : "Ошибка входа");
+
+          if (res.ok) {
+              window.location.href = "profile.html";
+          }
+      } catch (e) {
+          msg.innerText = "Ошибка соединения с сервером";
+      }
+  }
+</script>
+</body>
+</html>

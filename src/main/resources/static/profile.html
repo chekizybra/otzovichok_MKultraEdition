@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Otzovichok</title>
+  <link rel="stylesheet" href="style/profile.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="logo">Otzovichok</div>
+    <nav class="nav">
+      <a href="index.html">Главная</a>
+      <a style="color:blue">Профиль</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="card profile-card">
+      <div class="profile-top">
+        <div class="avatar" id="avatar">?</div>
+        <div class="profile-main">
+          <h1 id="welcome-name">Личный кабинет</h1>
+          <p>Ваши данные и ваши комментарии</p>
+        </div>
+      </div>
+
+      <div class="profile-info">
+        <div class="info-item">
+          <div class="info-label">ФИО</div>
+          <div class="info-value" id="fio">Загрузка...</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Почта</div>
+          <div class="info-value" id="mail">Загрузка...</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Роль</div>
+          <div class="info-value" id="role">Загрузка...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card stats-card">
+      <div class="stats-title">Моя статистика</div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-label">Мои комментарии</div>
+          <div class="stat-value" id="count-comments">0</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Лайки на моих комментах</div>
+          <div class="stat-value" id="count-likes">0</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Дизлайки на моих комментах</div>
+          <div class="stat-value" id="count-dislikes">0</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-label">Средняя оценка</div>
+          <div class="stat-value" id="avg-grade">0</div>
+        </div>
+      </div>
+
+      <button class="logout-btn" onclick="logout()">Выйти</button>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="section-head">
+      <div>
+        <h2>Активность</h2>
+        <div class="muted">Ваши комментарии</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab(this)">Мои комментарии</button>
+    </div>
+
+    <div class="comments-grid" id="my-comments">
+      <div class="empty">Загрузка...</div>
+    </div>
+  </section>
+</div>
+
+<script>
+  let currentUser = null;
+
+  function safe(v, def = "") {
+      return v === null || v === undefined ? def : v;
+  }
+
+  function escapeHtml(value) {
+      return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+  }
+
+  function showTab(btn) {
+      document.querySelectorAll(".tab-btn").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+  }
+
+  async function loadProfile() {
+      try {
+          const res = await fetch("http://localhost:8080/profile", {
+              method: "GET",
+              credentials: "include"
+          });
+
+          if (!res.ok) {
+              document.getElementById("fio").innerText = "Вы не вошли";
+              document.getElementById("mail").innerText = "-";
+              document.getElementById("role").innerText = "-";
+              document.getElementById("my-comments").innerHTML =
+                  '<div class="empty">Авторизуйтесь, чтобы увидеть профиль</div>';
+              return false;
+          }
+
+          const data = await res.json();
+          currentUser = data;
+
+          const fio = safe(data.fio, "Без имени");
+          const mail = safe(data.mail, "-");
+          const role = safe(data.role, "-");
+
+          document.getElementById("fio").innerText = fio;
+          document.getElementById("mail").innerText = mail;
+          document.getElementById("role").innerText = role;
+          document.getElementById("welcome-name").innerText = "Привет, " + fio;
+
+          const avatarLetter = fio.trim().length > 0 ? fio.trim()[0].toUpperCase() : "?";
+          document.getElementById("avatar").innerText = avatarLetter;
+
+          return true;
+      } catch (e) {
+          document.getElementById("fio").innerText = "Ошибка загрузки";
+          document.getElementById("mail").innerText = "-";
+          document.getElementById("role").innerText = "-";
+          document.getElementById("my-comments").innerHTML =
+              '<div class="empty">Ошибка соединения с сервером</div>';
+          return false;
+      }
+  }
+
+  function isMyComment(comment) {
+      if (!currentUser || !comment) return false;
+
+      if (comment.user) {
+          if (currentUser.id && comment.user.id && Number(comment.user.id) === Number(currentUser.id)) return true;
+          if (currentUser.mail && comment.user.mail && currentUser.mail === comment.user.mail) return true;
+          if (currentUser.fio && comment.user.fio && currentUser.fio === comment.user.fio) return true;
+      }
+
+      if (comment.user_id && currentUser.id && Number(comment.user_id) === Number(currentUser.id)) return true;
+
+      return false;
+  }
+
+  async function loadMyComments() {
+      const box = document.getElementById("my-comments");
+
+      try {
+          const res = await fetch("http://localhost:8080/comments", {
+              method: "GET",
+              credentials: "include"
+          });
+
+          if (!res.ok) {
+              box.innerHTML = '<div class="empty">Не удалось загрузить комментарии</div>';
+              return;
+          }
+
+          const data = await res.json();
+
+          if (!Array.isArray(data)) {
+              box.innerHTML = '<div class="empty">Неправильный формат данных</div>';
+              return;
+          }
+
+          const myComments = data.filter(isMyComment);
+
+          let totalLikes = 0;
+          let totalDislikes = 0;
+          let gradeSum = 0;
+
+          myComments.forEach(c => {
+              totalLikes += Number(c.plus_grade || 0);
+              totalDislikes += Number(c.minus_grade || 0);
+              gradeSum += Number(c.grade || 0);
+          });
+
+          document.getElementById("count-comments").innerText = myComments.length;
+          document.getElementById("count-likes").innerText = totalLikes;
+          document.getElementById("count-dislikes").innerText = totalDislikes;
+          document.getElementById("avg-grade").innerText =
+              myComments.length ? (gradeSum / myComments.length).toFixed(1) : "0";
+
+          if (myComments.length === 0) {
+              box.innerHTML = '<div class="empty">У вас пока нет комментариев или сервер не отдаёт автора комментария</div>';
+              return;
+          }
+
+          box.innerHTML = myComments.map(c => {
+              const title = escapeHtml(safe(c.title, "Без названия"));
+              const text = escapeHtml(safe(c.comment, "Нет текста"));
+              const date = escapeHtml(safe(c.post_date, "Дата не указана"));
+              const grade = safe(c.grade, "-");
+              const plus = safe(c.plus_grade, 0);
+              const minus = safe(c.minus_grade, 0);
+              const category = c.category && c.category.category
+                  ? escapeHtml(c.category.category)
+                  : "Без категории";
+
+              return `
+                  <div class="comment">
+                      <div class="comment-top">
+                          <div>
+                              <div class="comment-title">${title}</div>
+                              <div class="comment-meta">Дата: ${date}</div>
+                          </div>
+                          <div class="badge">${category}</div>
+                      </div>
+
+                      <div class="comment-text">${text}</div>
+
+                      <div class="comment-footer">
+                          <div class="rate">Оценка: ${grade}</div>
+                          <div class="rate">👍 ${plus}</div>
+                          <div class="rate">👎 ${minus}</div>
+                      </div>
+                  </div>
+              `;
+          }).join("");
+      } catch (e) {
+          box.innerHTML = '<div class="empty">Ошибка соединения с сервером</div>';
+      }
+  }
+
+  async function logout() {
+      try {
+          await fetch("http://localhost:8080/auth/logout", {
+              method: "POST",
+              credentials: "include"
+          });
+      } catch (e) {
+      }
+
+      window.location.href = "login.html";
+  }
+
+  async function init() {
+      const ok = await loadProfile();
+      if (ok) {
+          await loadMyComments();
+      }
+  }
+
+  init();
+</script>
+</body>
+</html>

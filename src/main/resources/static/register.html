@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация</title>
+  <link rel="stylesheet" href="style/register.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="title">Регистрация</div>
+    <div class="subtitle">Создайте аккаунт, чтобы писать комментарии и пользоваться профилем</div>
+
+    <div class="form">
+      <div>
+        <div class="label">ФИО</div>
+        <input class="input" type="text" id="fio" placeholder="Введите ФИО">
+      </div>
+
+      <div>
+        <div class="label">Почта</div>
+        <input class="input" type="email" id="mail" placeholder="Введите почту">
+      </div>
+
+      <div>
+        <div class="label">Пароль</div>
+        <input class="input" type="password" id="pasword" placeholder="Введите пароль">
+      </div>
+
+      <button class="btn" onclick="reg()">Зарегистрироваться</button>
+
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="links">
+      <a href="index.html">На главную</a>
+      <a href="login.html">Уже есть аккаунт? Вход</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function reg() {
+      const msg = document.getElementById("msg");
+      msg.innerText = "";
+
+      const fio = document.getElementById("fio").value.trim();
+      const mail = document.getElementById("mail").value.trim();
+      const pasword = document.getElementById("pasword").value;
+
+      if (!fio || !mail || !pasword) {
+          msg.innerText = "Заполните все поля";
+          return;
+      }
+
+      try {
+          const res = await fetch("http://localhost:8080/auth/register", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json"
+              },
+              credentials: "include",
+              body: JSON.stringify({ fio, mail, pasword })
+          });
+
+          const text = await res.text();
+
+          try {
+              const data = JSON.parse(text);
+              msg.innerText = data.message || "Готово";
+          } catch {
+              msg.innerText = text || "Готово";
+          }
+
+          if (res.ok) {
+              setTimeout(() => {
+                  window.location.href = "login.html";
+              }, 700);
+          }
+      } catch (e) {
+          msg.innerText = "Ошибка соединения с сервером";
+      }
+  }
+</script>
+</body>
+</html>

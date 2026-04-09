@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otzovichok</title>
+    <link rel="stylesheet" href="style/index.css">
+</head>
+<body>
+<div class="wrap">
+    <header class="topbar">
+        <div class="logo">Otzovichok</div>
+        <nav class="nav">
+            <a style="color:blue">Главная</a>
+            <a href="profile.html">Профиль</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="card hero-card">
+            <h1>Отзывы и комментарии без лишней мишуры</h1>
+            <p>
+                Здесь можно смотреть комментарии, ставить лайки и дизлайки,
+                а после входа пользоваться личным кабинетом. Страница подключена
+                к вашему Spring Boot backend и тянет список комментариев с сервера.
+            </p>
+
+            <div class="hero-actions" id="guest-actions">
+                <a class="primary-btn" href="register.html">Зарегистрироваться</a>
+                <a class="secondary-btn" href="login.html">Войти</a>
+            </div>
+
+            <button class="write-comment-btn" id="writeCommentBtn">Оставить отзыв</button>
+        </div>
+
+        <div class="card">
+            <div class="stats-title">Общая статистика</div>
+
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-label">Всего комментариев</div>
+                    <div class="stat-value" id="count-comments">0</div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-label">Всего лайков</div>
+                    <div class="stat-value" id="count-likes">0</div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-label">Всего дизлайков</div>
+                    <div class="stat-value" id="count-dislikes">0</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card section-card">
+        <div class="section-head">
+            <div>
+                <h2>Комментарии</h2>
+                <div class="muted">Список загружается с /comments</div>
+            </div>
+        </div>
+
+        <div class="comments-grid" id="comments-list">
+            <div class="empty">Загрузка...</div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function safe(v, def = "") {
+        return v === null || v === undefined ? def : v;
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    async function loadComments() {
+        const box = document.getElementById("comments-list");
+
+        try {
+            const res = await fetch("http://localhost:8080/comments", {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) {
+                box.innerHTML = '<div class="empty">Не удалось загрузить комментарии</div>';
+                return;
+            }
+
+            const data = await res.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+                box.innerHTML = '<div class="empty">Комментариев пока нет</div>';
+                document.getElementById("count-comments").innerText = "0";
+                document.getElementById("count-likes").innerText = "0";
+                document.getElementById("count-dislikes").innerText = "0";
+                return;
+            }
+
+            let likes = 0;
+            let dislikes = 0;
+
+            data.forEach(c => {
+                likes += Number(c.plus_grade || 0);
+                dislikes += Number(c.minus_grade || 0);
+            });
+
+            document.getElementById("count-comments").innerText = data.length;
+            document.getElementById("count-likes").innerText = likes;
+            document.getElementById("count-dislikes").innerText = dislikes;
+
+            box.innerHTML = data.map(c => {
+                const title = escapeHtml(safe(c.title, "Без названия"));
+                const text = escapeHtml(safe(c.comment, "Нет текста"));
+                const date = escapeHtml(safe(c.post_date, "Дата не указана"));
+                const grade = safe(c.grade, "-");
+                const plus = safe(c.plus_grade, 0);
+                const minus = safe(c.minus_grade, 0);
+                const category = c.category && c.category.category
+                    ? escapeHtml(c.category.category)
+                    : "Без категории";
+
+                return `
+                    <div class="comment">
+                        <div class="comment-top">
+                            <div>
+                                <div class="comment-title">${title}</div>
+                                <div class="comment-meta">Дата: ${date}</div>
+                            </div>
+                            <div class="badge">${category}</div>
+                        </div>
+
+                        <div class="comment-text">${text}</div>
+
+                        <div class="comment-footer">
+                            <div class="rates">
+                                <div class="rate">Оценка: ${grade}</div>
+                                <div class="rate"> + ${plus}</div>
+                                <div class="rate"> - ${minus}</div>
+                            </div>
+
+                            <div class="comment-actions">
+                                <button class="action-btn" onclick="upvote(${c.id})">Лайк</button>
+                                <button class="action-btn dislike" onclick="downvote(${c.id})">Дизлайк</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        } catch (e) {
+            box.innerHTML = '<div class="empty">Ошибка соединения с сервером</div>';
+        }
+    }
+
+    async function upvote(id) {
+        try {
+            const res = await fetch(`http://localhost:8080/comments/${id}/upvote`, {
+                method: "POST",
+                credentials: "include"
+            });
+
+            if (res.ok) {
+                loadComments();
+            } else {
+                alert("Нужно войти в аккаунт");
+            }
+        } catch (e) {
+            alert("Ошибка при лайке");
+        }
+    }
+
+    async function downvote(id) {
+        try {
+            const res = await fetch(`http://localhost:8080/comments/${id}/downvote`, {
+                method: "POST",
+                credentials: "include"
+            });
+            if (res.ok) {
+                loadComments();
+            } else {
+                alert("Нужно войти в аккаунт");
+            }
+            } catch (e) {
+                alert("Ошибка при дизлайке");
+            }
+        }
+        const writeCommentBtn = document.getElementById('writeCommentBtn');
+
+        if (writeCommentBtn) {
+            writeCommentBtn.addEventListener('click', async () => {
+                const isAuth = await checkAuth();
+            if (isAuth) {
+                window.location.href = '/newcomment.html';
+            } else {
+                window.location.href = '/login.html';
+            }
+            });
+        }
+
+        async function checkAuth() {
+        try {
+            const res = await fetch("http://localhost:8080/profile", {
+                method: "GET",
+                credentials: "include"
+            });
+
+                if (res.ok) {
+                    document.getElementById("guest-actions").style.display = "none";
+                    document.getElementById("user-actions").style.display = "flex";
+                }
+            } catch (e) {
+        }
+    }
+
+    loadComments();
+    checkAuth();
+</script>
+</body>
+</html>
