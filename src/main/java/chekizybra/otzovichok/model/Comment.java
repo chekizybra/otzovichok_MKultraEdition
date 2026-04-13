@@ -26,8 +26,6 @@ public class Comment {
     private String title;
     private String comment;
     private int grade;
-    private int plus_grade;
-    private int minus_grade;
     @Column(name = "post_date")
     private LocalDate postDate;
 }

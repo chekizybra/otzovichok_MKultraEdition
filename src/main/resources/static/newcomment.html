@@ -7,70 +7,71 @@
     <link rel="stylesheet" href="style/newcomment.css">
 </head>
 <body>
-<header class="header">
-    <div class="logo">Otzovichok</div>
+<div class="wrap">
+    <header class="topbar">
+        <div class="logo">Otzovichok</div>
 
-    <nav class="nav">
-        <a href="/">Главная</a>
-        <a href="/profile">Профиль</a>
-    </nav>
-</header>
+        <nav class="nav">
+            <a href="index.html">Главная</a>
+            <a href="profile.html">Профиль</a>
+        </nav>
+    </header>
 
-<main class="page">
-    <section class="comment-form-section">
-        <div class="form-card">
-            <div class="form-top">
-                <h1>Написать отзыв</h1>
-                <p>Расскажите о товаре, выберите категорию и поставьте оценку.</p>
+    <section class="card section-card">
+        <div class="section-head">
+            <div>
+                <h2>Написать отзыв</h2>
+                <div class="muted">Расскажите о товаре, выберите категорию и поставьте оценку</div>
+            </div>
+        </div>
+
+        <form id="commentForm" class="comment-form">
+            <div class="field">
+                <label for="title">Название товара</label>
+                <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        maxlength="200"
+                        placeholder="Например: сыр Черный принц"
+                        required
+                >
             </div>
 
-            <form id="commentForm" class="comment-form">
-                <div class="field">
-                    <label for="title">Название товара</label>
-                    <input
-                            type="text"
-                            id="title"
-                            name="title"
-                            maxlength="200"
-                            placeholder="Например: HyperX Cloud III"
-                            required
-                    >
-                </div>
+            <div class="field">
+                <label>Категория</label>
+                <div id="categoryContainer" class="category-container"></div>
+                <small class="hint">Выберите конечную категорию</small>
+            </div>
 
-                <div class="field">
-                    <label>Категория</label>
-                    <div id="categoryContainer" class="category-container"></div>
-                    <small class="hint">Выберите конечную категорию из списка.</small>
-                </div>
+            <div class="field">
+                <label for="comment">Комментарий</label>
+                <textarea
+                        id="comment"
+                        name="comment"
+                        rows="8"
+                        placeholder="Опишите плюсы, минусы, опыт использования"
+                        required
+                ></textarea>
+            </div>
 
-                <div class="field">
-                    <label for="comment">Комментарий</label>
-                    <textarea
-                            id="comment"
-                            name="comment"
-                            rows="8"
-                            placeholder="Опишите плюсы, минусы, опыт использования..."
-                            required
-                    ></textarea>
+            <div class="field">
+                <label>Оценка</label>
+                <div class="rating-block">
+                    <div id="starRating" class="star-rating"></div>
+                    <div id="ratingValue" class="rating-value">Оценка не выбрана</div>
                 </div>
+            </div>
 
-                <div class="field">
-                    <label>Оценка</label>
-                    <div class="rating-block">
-                        <div id="starRating" class="star-rating"></div>
-                        <div id="ratingValue" class="rating-value">Оценка не выбрана</div>
-                    </div>
-                </div>
+            <div class="actions">
+                <button type="submit" class="primary-btn submit-btn">Опубликовать отзыв</button>
+                <a href="index.html" class="secondary-btn">Назад</a>
+            </div>
 
-                <div class="actions">
-                    <button type="submit" class="submit-btn">Опубликовать отзыв</button>
-                </div>
-
-                <div id="formMessage" class="form-message"></div>
-            </form>
-        </div>
+            <div id="formMessage" class="form-message"></div>
+        </form>
     </section>
-</main>
+</div>
 
 <script>
     const form = document.getElementById('commentForm');
@@ -112,7 +113,10 @@
 
     async function loadRootCategories() {
         try {
-            const response = await fetch('/categories/roots');
+            const response = await fetch('http://localhost:8080/categories/roots', {
+                method: 'GET',
+                credentials: 'include'
+            });
 
             if (!response.ok) {
                 throw new Error('Не удалось загрузить категории');
@@ -167,7 +171,10 @@
             selectedCategoryId = Number(select.value);
 
             try {
-                const response = await fetch('/categories/' + select.value + '/children');
+                const response = await fetch('http://localhost:8080/categories/' + select.value + '/children', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
 
                 if (!response.ok) {
                     throw new Error('Ошибка загрузки подкатегорий');
@@ -221,11 +228,11 @@
         };
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Публикуем...';
 
         try {
-            const response = await fetch('/comments', {
+            const response = await fetch('http://localhost:8080/comments', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -239,7 +246,7 @@
                 renderRating();
                 await loadRootCategories();
                 ratingValue.textContent = 'Оценка не выбрана';
-                setMessage('Отзыв успешно опубликован', 'success');
+                window.location.href = "index.html";
                 return;
             }
 

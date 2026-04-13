@@ -274,10 +274,10 @@ body {
     background: #fafafa;
 }
 
-.write-comment-btn {
-    display: inline-block;
+.write-comment-href {
+    display: none;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: #10b981;
     color: white;
     text-decoration: none;
     border-radius: 14px;
@@ -287,7 +287,7 @@ body {
     box-shadow: 0 8px 18px rgba(16, 185, 129, 0.16);
 }
 
-.write-comment-btn:hover {
+.write-comment-href:hover {
     transform: translateY(-1px);
     box-shadow: 0 12px 22px rgba(16, 185, 129, 0.22);
 }

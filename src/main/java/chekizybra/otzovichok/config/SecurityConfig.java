@@ -1,8 +1,10 @@
 package chekizybra.otzovichok.config;
 
 import chekizybra.otzovichok.services.CustomUserDetailsService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -33,7 +35,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/login.html", "/register.html")
                         .permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**")
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/style/**")
                         .permitAll()
                         .requestMatchers("/auth/**")
                         .permitAll()
@@ -61,9 +63,21 @@ public class SecurityConfig {
                         .authenticated()
                         .anyRequest().permitAll()
                 )
-                .exceptionHandling(ex -> ex
+                .exceptionHandling(exep -> exep
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendRedirect("/login.html");
+                            String ajaxHeader = request.getHeader("X-Requested-With");
+                            String acceptHeader = request.getHeader(HttpHeaders.ACCEPT);
+
+                            boolean isAjax = "XMLHttpRequest".equals(ajaxHeader);
+                            boolean wantsJson = acceptHeader != null && acceptHeader.contains("application/json");
+
+                            if (isAjax || wantsJson) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json;charset=UTF-8");
+                                response.getWriter().write("{\"message\":\"unauthorized\"}");
+                            } else {
+                                response.sendRedirect("/login.html");
+                            }
                         })
                 )
                 .formLogin(form -> form
@@ -73,7 +87,7 @@ public class SecurityConfig {
                             response.getWriter().write("{\"message\":\"ok\"}");
                         })
                         .failureHandler((request, response, exception) -> {
-                            response.setStatus(401);
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write("{\"message\":\"bad credentials\"}");
                         })
@@ -81,6 +95,9 @@ public class SecurityConfig {
                 )
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
                         .logoutSuccessHandler((request, response, authentication) -> {
                             response.setContentType("application/json;charset=UTF-8");
                             response.getWriter().write("{\"message\":\"logout ok\"}");

@@ -36,11 +36,6 @@
           <div class="info-label">Почта</div>
           <div class="info-value" id="mail">Загрузка...</div>
         </div>
-
-        <div class="info-item">
-          <div class="info-label">Роль</div>
-          <div class="info-value" id="role">Загрузка...</div>
-        </div>
       </div>
     </div>
 
@@ -113,45 +108,38 @@
   }
 
   async function loadProfile() {
-      try {
-          const res = await fetch("http://localhost:8080/profile", {
-              method: "GET",
-              credentials: "include"
-          });
-
-          if (!res.ok) {
-              document.getElementById("fio").innerText = "Вы не вошли";
-              document.getElementById("mail").innerText = "-";
-              document.getElementById("role").innerText = "-";
-              document.getElementById("my-comments").innerHTML =
-                  '<div class="empty">Авторизуйтесь, чтобы увидеть профиль</div>';
-              return false;
+      const res = await fetch("http://localhost:8080/profile", {
+          method: "GET",
+          credentials: "include",
+          headers: {
+              "X-Requested-With": "XMLHttpRequest"
           }
+      });
 
-          const data = await res.json();
-          currentUser = data;
-
-          const fio = safe(data.fio, "Без имени");
-          const mail = safe(data.mail, "-");
-          const role = safe(data.role, "-");
-
-          document.getElementById("fio").innerText = fio;
-          document.getElementById("mail").innerText = mail;
-          document.getElementById("role").innerText = role;
-          document.getElementById("welcome-name").innerText = "Привет, " + fio;
-
-          const avatarLetter = fio.trim().length > 0 ? fio.trim()[0].toUpperCase() : "?";
-          document.getElementById("avatar").innerText = avatarLetter;
-
-          return true;
-      } catch (e) {
-          document.getElementById("fio").innerText = "Ошибка загрузки";
-          document.getElementById("mail").innerText = "-";
-          document.getElementById("role").innerText = "-";
-          document.getElementById("my-comments").innerHTML =
-              '<div class="empty">Ошибка соединения с сервером</div>';
+      if (res.status === 401 || res.status === 403) {
+          window.location.href = "login.html";
           return false;
       }
+
+      if (!res.ok) {
+          window.location.href = "login.html";
+          return false;
+      }
+
+      const data = await res.json();
+      currentUser = data;
+
+      const fio = safe(data.fio, "Без имени");
+      const mail = safe(data.mail, "-");
+
+      document.getElementById("fio").innerText = fio;
+      document.getElementById("mail").innerText = mail;
+      document.getElementById("welcome-name").innerText = "Привет, " + fio;
+
+      const avatarLetter = fio.trim().length > 0 ? fio.trim()[0].toUpperCase() : "?";
+      document.getElementById("avatar").innerText = avatarLetter;
+
+      return true;
   }
 
   function isMyComment(comment) {
@@ -215,10 +203,10 @@
           box.innerHTML = myComments.map(c => {
               const title = escapeHtml(safe(c.title, "Без названия"));
               const text = escapeHtml(safe(c.comment, "Нет текста"));
-              const date = escapeHtml(safe(c.post_date, "Дата не указана"));
+              const date = escapeHtml(safe(c.postDate, "Дата не указана"));
               const grade = safe(c.grade, "-");
-              const plus = safe(c.plus_grade, 0);
-              const minus = safe(c.minus_grade, 0);
+              const plus = safe(c.plusGrade, 0);
+              const minus = safe(c.minusGrade, 0);
               const category = c.category && c.category.category
                   ? escapeHtml(c.category.category)
                   : "Без категории";

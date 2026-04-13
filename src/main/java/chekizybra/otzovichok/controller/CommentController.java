@@ -1,5 +1,7 @@
 package chekizybra.otzovichok.controller;
 
+import chekizybra.otzovichok.dto.CommentCreateDto;
+import chekizybra.otzovichok.dto.CommentReadDto;
 import chekizybra.otzovichok.model.Comment;
 import chekizybra.otzovichok.services.CommentService;
 import org.springframework.security.core.Authentication;
@@ -18,8 +20,8 @@ public class CommentController {
     }
 
     @GetMapping
-    public List<Comment> getComments() {
-        return service.getAllComments();
+    public List<CommentReadDto> getComments() {
+        return service.getAllCommentsDto();
     }
 
     @PostMapping("/{id}/upvote")
@@ -33,7 +35,7 @@ public class CommentController {
     }
 
     @PostMapping
-    public Comment addComment(@RequestBody Comment comment) {
-        return service.saveComment(comment);
+    public Comment addComment(@RequestBody CommentCreateDto req, Authentication authentication) {
+        return service.createComment(req, authentication.getName());
     }
 }
