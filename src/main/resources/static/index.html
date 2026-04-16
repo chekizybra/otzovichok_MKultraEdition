@@ -22,9 +22,9 @@
         <div class="card hero-card">
             <h1>Отзывы и комментарии разного сорта</h1>
             <div class="hero-actions" id="guest-actions">
-            <p>
-                Чтобы оставлять отзывы или оценивать чужие, зарегистрируйтесь или войдите в аккаунт.
-            </p>
+                <p>
+                    Чтобы оставлять отзывы или оценивать чужие, зарегистрируйтесь или войдите в аккаунт.
+                </p>
                 <a class="primary-btn" href="register.html">Зарегистрироваться</a>
                 <a class="secondary-btn" href="login.html">Войти</a>
             </div>
@@ -58,8 +58,18 @@
             <div>
                 <h2>Комментарии</h2>
             </div>
-        </div>
 
+            <div class="comment-tools">
+                <input type="text" id="searchTitle" placeholder="Поиск по заголовку">
+                <select id="sortSelect">
+                    <option value="date_desc">Сначала новые</option>
+                    <option value="date_asc">Сначала старые</option>
+                    <option value="grade_desc">Оценка по убыванию</option>
+                    <option value="grade_asc">Оценка по возрастанию</option>
+                </select>
+                <button class="primary-btn" onclick="loadComments()">Найти</button>
+            </div>
+        </div>
         <div class="comments-grid" id="comments-list">
             <div class="empty">Загрузка...</div>
         </div>
@@ -67,165 +77,173 @@
 </div>
 
 <script>
-   function safe(v, def = "") {
-       return v === null || v === undefined ? def : v;
-   }
 
-   function escapeHtml(value) {
-       return String(value)
-           .replaceAll("&", "&amp;")
-           .replaceAll("<", "&lt;")
-           .replaceAll(">", "&gt;")
-           .replaceAll('"', "&quot;")
-           .replaceAll("'", "&#039;");
-   }
+    function safe(v, def = "") {
+        return v === null || v === undefined ? def : v;
+    }
 
-   async function loadComments() {
-       const box = document.getElementById("comments-list");
-       const guestActions = document.getElementById("guest-actions");
-       const writeCommentBtn = document.getElementById("writeCommentHref");
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
 
-       const isAuth = await checkAuth();
-       console.log("isAuth =", isAuth);
-       if (guestActions) guestActions.style.display = isAuth ? "none" : "flex";
-       if (writeCommentBtn) writeCommentBtn.style.display = isAuth ? "inline-block" : "none";
+    async function loadComments() {
+        const box = document.getElementById("comments-list");
+        const guestActions = document.getElementById("guest-actions");
+        const writeCommentBtn = document.getElementById("writeCommentHref");
 
-       try {
-           const res = await fetch("http://localhost:8080/comments", {
-               method: "GET",
-               credentials: "include"
-           });
+        const isAuth = await checkAuth();
+        console.log("isAuth =", isAuth);
+        if (guestActions) guestActions.style.display = isAuth ? "none" : "flex";
+        if (writeCommentBtn) writeCommentBtn.style.display = isAuth ? "inline-block" : "none";
 
-           if (!res.ok) {
-               box.innerHTML = '<div class="empty">Не удалось загрузить комментарии</div>';
-               return;
-           }
+        try {
+     const title = document.getElementById("searchTitle")?.value.trim() || "";
+     const sort = document.getElementById("sortSelect")?.value || "date_desc";
 
-           const data = await res.json();
+     const params = new URLSearchParams();
+     if (title) params.append("title", title);
+     params.append("sort", sort);
 
-           if (!Array.isArray(data) || data.length === 0) {
-               box.innerHTML = '<div class="empty">Комментариев пока нет</div>';
-               document.getElementById("count-comments").innerText = "0";
-               document.getElementById("count-likes").innerText = "0";
-               document.getElementById("count-dislikes").innerText = "0";
-               return;
-           }
+     const res = await fetch("http://localhost:8080/comments?" + params.toString(), {
+         method: "GET",
+         credentials: "include"
+     });
 
-           let likes = 0;
-           let dislikes = 0;
+            if (!res.ok) {
+                box.innerHTML = '<div class="empty">Не удалось загрузить комментарии</div>';
+                return;
+            }
 
-           data.forEach(c => {
-               likes += Number(c.plusGrade || 0);
-               dislikes += Number(c.minusGrade || 0);
-           });
+            const data = await res.json();
 
-           document.getElementById("count-comments").innerText = data.length;
-           document.getElementById("count-likes").innerText = likes;
-           document.getElementById("count-dislikes").innerText = dislikes;
+            if (!Array.isArray(data) || data.length === 0) {
+                box.innerHTML = '<div class="empty">Комментариев пока нет</div>';
+                document.getElementById("count-comments").innerText = "0";
+                document.getElementById("count-likes").innerText = "0";
+                document.getElementById("count-dislikes").innerText = "0";
+                return;
+            }
 
-           box.innerHTML = data.map(c => {
-               const title = escapeHtml(safe(c.title, "Без названия"));
-               const text = escapeHtml(safe(c.comment, "Нет текста"));
-               const date = escapeHtml(safe(c.postDate, "Дата не указана"));
-               const grade = safe(c.grade, "-");
-               const plus = safe(c.plusGrade, 0);
-               const minus = safe(c.minusGrade, 0);
-               const category = c.category && c.category
-                   ? escapeHtml(c.category.category)
-                   : "Без категории";
+            let likes = 0;
+            let dislikes = 0;
 
-               const actionsHtml = isAuth
-                   ? `
-                       <div class="comment-actions">
-                           <button class="action-btn" onclick="upvote(${c.id})">Лайк</button>
-                           <button class="action-btn dislike" onclick="downvote(${c.id})">Дизлайк</button>
-                       </div>
-                   `
-                   : "";
+            data.forEach(c => {
+                likes += Number(c.plusGrade || 0);
+                dislikes += Number(c.minusGrade || 0);
+            });
 
-               return `
-                   <div class="comment">
-                       <div class="comment-top">
-                           <div>
-                               <div class="comment-title">${title}</div>
-                               <div class="comment-meta">Дата: ${date}</div>
-                           </div>
-                           <div class="badge">${category}</div>
-                       </div>
+            document.getElementById("count-comments").innerText = data.length;
+            document.getElementById("count-likes").innerText = likes;
+            document.getElementById("count-dislikes").innerText = dislikes;
 
-                       <div class="comment-text">${text}</div>
+            box.innerHTML = data.map(c => {
+                const title = escapeHtml(safe(c.title, "Без названия"));
+                const text = escapeHtml(safe(c.comment, "Нет текста"));
+                const date = escapeHtml(safe(c.postDate, "Дата не указана"));
+                const grade = safe(c.grade, "-");
+                const plus = safe(c.plusGrade, 0);
+                const minus = safe(c.minusGrade, 0);
+                const category = c.category && c.category
+                    ? escapeHtml(c.category.category)
+                    : "Без категории";
 
-                       <div class="comment-footer">
-                           <div class="rates">
-                               <div class="rate">Оценка: ${grade}</div>
-                               <div class="rate"> + ${plus}</div>
-                               <div class="rate"> - ${minus}</div>
-                           </div>
+                const actionsHtml = isAuth
+                    ? `
+                        <div class="comment-actions">
+                            <button class="action-btn" onclick="upvote(${c.id})">Лайк</button>
+                            <button class="action-btn dislike" onclick="downvote(${c.id})">Дизлайк</button>
+                        </div>
+                    `
+                    : "";
 
-                           ${actionsHtml}
-                       </div>
-                   </div>
-               `;
-           }).join("");
-       } catch (e) {
-           box.innerHTML = '<div class="empty">Ошибка соединения с сервером</div>';
-       }
-   }
+                return `
+                    <div class="comment">
+                        <div class="comment-top">
+                            <div>
+                                <div class="comment-title">${title}</div>
+                                <div class="comment-meta">Дата: ${date}</div>
+                            </div>
+                            <div class="badge">${category}</div>
+                        </div>
 
-   async function upvote(id) {
-       try {
-           const res = await fetch(`http://localhost:8080/comments/${id}/upvote`, {
-               method: "POST",
-               credentials: "include"
-           });
+                        <div class="comment-text">${text}</div>
 
-           if (res.ok) {
-               loadComments();
-           } else {
-               alert("Нужно войти в аккаунт");
-           }
-       } catch (e) {
-           alert("Ошибка при лайке");
-       }
-   }
+                        <div class="comment-footer">
+                            <div class="rates">
+                                <div class="rate">Оценка: ${grade}</div>
+                                <div class="rate"> + ${plus}</div>
+                                <div class="rate"> - ${minus}</div>
+                            </div>
 
-   async function downvote(id) {
-       try {
-           const res = await fetch(`http://localhost:8080/comments/${id}/downvote`, {
-               method: "POST",
-               credentials: "include"
-           });
+                            ${actionsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        } catch (e) {
+            box.innerHTML = '<div class="empty">Ошибка соединения с сервером</div>';
+        }
+    }
 
-           if (res.ok) {
-               loadComments();
-           } else {
-               alert("Нужно войти в аккаунт");
-           }
-       } catch (e) {
-           alert("Ошибка дизлайка");
-       }
-   }
+    async function upvote(id) {
+        try {
+            const res = await fetch(`http://localhost:8080/comments/${id}/upvote`, {
+                method: "POST",
+                credentials: "include"
+            });
 
-   async function checkAuth() {
-       try {
-           const res = await fetch("http://localhost:8080/profile", {
-               method: "GET",
-               credentials: "include",
-               headers: {
-                   "Accept": "application/json",
-                   "X-Requested-With": "XMLHttpRequest"
-               }
-           });
+            if (res.ok) {
+                loadComments();
+            } else {
+                alert("Нужно войти в аккаунт");
+            }
+        } catch (e) {
+            alert("Ошибка при лайке");
+        }
+    }
 
-           return res.status === 200;
-       } catch (e) {
-           return false;
-       }
-   }
+    async function downvote(id) {
+        try {
+            const res = await fetch(`http://localhost:8080/comments/${id}/downvote`, {
+                method: "POST",
+                credentials: "include"
+            });
+
+            if (res.ok) {
+                loadComments();
+            } else {
+                alert("Нужно войти в аккаунт");
+            }
+        } catch (e) {
+            alert("Ошибка дизлайка");
+        }
+    }
+
+    async function checkAuth() {
+        try {
+            const res = await fetch("http://localhost:8080/profile", {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            return res.status === 200;
+        } catch (e) {
+            return false;
+        }
+    }
 
 
-   loadComments();
-   checkAuth();
+    loadComments();
+    checkAuth();
 </script>
 </body>
 </html>

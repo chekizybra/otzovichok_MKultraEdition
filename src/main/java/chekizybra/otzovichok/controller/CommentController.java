@@ -12,10 +12,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/comments")
 public class CommentController {
-    @GetMapping("/my")
-    public List<CommentReadDto> getMyComments(Authentication authentication) {
-        return service.getMyCommentsDto(authentication.getName());
-    }
 
     private final CommentService service;
 
@@ -23,9 +19,17 @@ public class CommentController {
         this.service = service;
     }
 
+    @GetMapping("/my")
+    public List<CommentReadDto> getMyComments(Authentication authentication) {
+        return service.getMyCommentsDto(authentication.getName());
+    }
+
     @GetMapping
-    public List<CommentReadDto> getComments() {
-        return service.getAllCommentsDto();
+    public List<CommentReadDto> getComments(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false, defaultValue = "date_desc") String sort
+    ) {
+        return service.getCommentsDto(title, sort);
     }
 
     @PostMapping("/{id}/upvote")

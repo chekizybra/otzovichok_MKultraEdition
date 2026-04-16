@@ -71,6 +71,51 @@ public class CommentService {
         }).toList();
     }
 
+    public List<CommentReadDto> getCommentsDto(String title, String sort) {
+        List<Comment> comments;
+
+        boolean hasTitle = title != null && !title.isBlank();
+
+        if (hasTitle) {
+            if ("date_asc".equals(sort)) {
+                comments = repo.findByTitleContainingIgnoreCaseOrderByPostDateAsc(title);
+            } else if ("grade_desc".equals(sort)) {
+                comments = repo.findByTitleContainingIgnoreCaseOrderByGradeDesc(title);
+            } else if ("grade_asc".equals(sort)) {
+                comments = repo.findByTitleContainingIgnoreCaseOrderByGradeAsc(title);
+            } else {
+                comments = repo.findByTitleContainingIgnoreCaseOrderByPostDateDesc(title);
+            }
+        } else {
+            if ("date_asc".equals(sort)) {
+                comments = repo.findAllByOrderByPostDateAsc();
+            } else if ("grade_desc".equals(sort)) {
+                comments = repo.findAllByOrderByGradeDesc();
+            } else if ("grade_asc".equals(sort)) {
+                comments = repo.findAllByOrderByGradeAsc();
+            } else {
+                comments = repo.findAllByOrderByPostDateDesc();
+            }
+        }
+
+        return comments.stream().map(c -> {
+            CommentReadDto dto = new CommentReadDto();
+            dto.setId(c.getId());
+            dto.setTitle(c.getTitle());
+            dto.setComment(c.getComment());
+            dto.setGrade(c.getGrade());
+            dto.setPostDate(c.getPostDate() != null ? c.getPostDate().toString() : null);
+            dto.setPlusGrade(voteRepo.countByCommentIdAndValue(c.getId(), 1));
+            dto.setMinusGrade(voteRepo.countByCommentIdAndValue(c.getId(), -1));
+
+            if (c.getCategory() != null) {
+                dto.setCategory(CategoryDto.from(c.getCategory()));
+            }
+
+            return dto;
+        }).toList();
+    }
+
     public Comment createComment(CommentCreateDto req, String mail) {
         User user = userRepo.findByMail(mail).orElse(null);
         Category category = categoryRepo.findById(req.getCategoryId()).orElse(null);

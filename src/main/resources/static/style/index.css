@@ -292,6 +292,23 @@ body {
     box-shadow: 0 12px 22px rgba(16, 185, 129, 0.22);
 }
 
+.comment-tools {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.comment-tools input,
+.comment-tools select {
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #ffffff;
+    font-size: 14px;
+    color: #111827;
+}
+
 @media (max-width: 900px) {
     .hero {
         grid-template-columns: 1fr;
