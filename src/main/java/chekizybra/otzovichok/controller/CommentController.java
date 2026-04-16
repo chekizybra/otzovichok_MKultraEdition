@@ -12,6 +12,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/comments")
 public class CommentController {
+    @GetMapping("/my")
+    public List<CommentReadDto> getMyComments(Authentication authentication) {
+        return service.getMyCommentsDto(authentication.getName());
+    }
 
     private final CommentService service;
 

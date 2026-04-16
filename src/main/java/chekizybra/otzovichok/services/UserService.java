@@ -6,11 +6,11 @@ import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CustomUserDetailsService implements UserDetailsService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository repo;
 
-    public CustomUserDetailsService(UserRepository repo) {
+    public UserService(UserRepository repo) {
         this.repo = repo;
     }
 

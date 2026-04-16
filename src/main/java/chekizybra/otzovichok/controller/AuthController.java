@@ -29,7 +29,7 @@ public class AuthController {
 
         Role role = roleRepo.findByRole("user").orElse(null);
         if (role == null) {
-            return "Роль user не найдена";
+            return "ошибка выдачи роли";
         }
 
         user.setPasword(encoder.encode(user.getPasword()));

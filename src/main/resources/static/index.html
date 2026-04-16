@@ -57,7 +57,6 @@
         <div class="section-head">
             <div>
                 <h2>Комментарии</h2>
-                <div class="muted">Список загружается с /comments</div>
             </div>
         </div>
 
@@ -116,8 +115,8 @@
            let dislikes = 0;
 
            data.forEach(c => {
-               likes += Number(c.plus_grade || 0);
-               dislikes += Number(c.minus_grade || 0);
+               likes += Number(c.plusGrade || 0);
+               dislikes += Number(c.minusGrade || 0);
            });
 
            document.getElementById("count-comments").innerText = data.length;
@@ -131,7 +130,7 @@
                const grade = safe(c.grade, "-");
                const plus = safe(c.plusGrade, 0);
                const minus = safe(c.minusGrade, 0);
-               const category = c.category && c.category.category
+               const category = c.category && c.category
                    ? escapeHtml(c.category.category)
                    : "Без категории";
 
@@ -203,7 +202,7 @@
                alert("Нужно войти в аккаунт");
            }
        } catch (e) {
-           alert("Ошибка при дизлайке");
+           alert("Ошибка дизлайка");
        }
    }
 

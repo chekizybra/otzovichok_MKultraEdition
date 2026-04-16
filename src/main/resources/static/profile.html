@@ -143,26 +143,26 @@
   }
 
   function isMyComment(comment) {
-      if (!currentUser || !comment) return false;
+    if (!currentUser || !comment) return false;
 
-      if (comment.user) {
-          if (currentUser.id && comment.user.id && Number(comment.user.id) === Number(currentUser.id)) return true;
-          if (currentUser.mail && comment.user.mail && currentUser.mail === comment.user.mail) return true;
-          if (currentUser.fio && comment.user.fio && currentUser.fio === comment.user.fio) return true;
-      }
+    if (comment.user) {
+        if (currentUser.id && comment.user.id && Number(comment.user.id) === Number(currentUser.id)) return true;
+        if (currentUser.mail && comment.user.mail && currentUser.mail === comment.user.mail) return true;
+        if (currentUser.fio && comment.user.fio && currentUser.fio === comment.user.fio) return true;
+    }
 
-      if (comment.user_id && currentUser.id && Number(comment.user_id) === Number(currentUser.id)) return true;
+    if (comment.user_id && currentUser.id && Number(comment.user_id) === Number(currentUser.id)) return true;
 
-      return false;
+    return false;
   }
 
   async function loadMyComments() {
       const box = document.getElementById("my-comments");
 
       try {
-          const res = await fetch("http://localhost:8080/comments", {
-              method: "GET",
-              credentials: "include"
+          const res = await fetch("http://localhost:8080/comments/my", {
+          method: "GET",
+          credentials: "include"
           });
 
           if (!res.ok) {
@@ -177,15 +177,15 @@
               return;
           }
 
-          const myComments = data.filter(isMyComment);
+          const myComments = data;
 
           let totalLikes = 0;
           let totalDislikes = 0;
           let gradeSum = 0;
 
           myComments.forEach(c => {
-              totalLikes += Number(c.plus_grade || 0);
-              totalDislikes += Number(c.minus_grade || 0);
+              totalLikes += Number(c.plusGrade || 0);
+              totalDislikes += Number(c.minusGrade || 0);
               gradeSum += Number(c.grade || 0);
           });
 
@@ -196,7 +196,7 @@
               myComments.length ? (gradeSum / myComments.length).toFixed(1) : "0";
 
           if (myComments.length === 0) {
-              box.innerHTML = '<div class="empty">У вас пока нет комментариев или сервер не отдаёт автора комментария</div>';
+              box.innerHTML = '<div class="empty">У вас пока нет комментариев</div>';
               return;
           }
 

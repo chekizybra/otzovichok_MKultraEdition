@@ -1,6 +1,6 @@
 package chekizybra.otzovichok.config;
 
-import chekizybra.otzovichok.services.CustomUserDetailsService;
+import chekizybra.otzovichok.services.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,9 +21,9 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
+    private final UserService userDetailsService;
 
-    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(UserService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
 

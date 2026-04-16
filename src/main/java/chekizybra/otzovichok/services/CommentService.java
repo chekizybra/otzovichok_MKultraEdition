@@ -1,5 +1,6 @@
 package chekizybra.otzovichok.services;
 
+import chekizybra.otzovichok.dto.CategoryDto;
 import chekizybra.otzovichok.dto.CommentCreateDto;
 import chekizybra.otzovichok.dto.CommentReadDto;
 import chekizybra.otzovichok.model.Category;
@@ -47,6 +48,27 @@ public class CommentService {
 
     public Comment getComment(Long id) {
         return repo.findById(id).orElse(null);
+    }
+
+    public List<CommentReadDto> getMyCommentsDto(String mail) {
+        List<Comment> comments = repo.findByUserMailOrderByPostDateDesc(mail);
+
+        return comments.stream().map(c -> {
+            CommentReadDto dto = new CommentReadDto();
+            dto.setId(c.getId());
+            dto.setTitle(c.getTitle());
+            dto.setComment(c.getComment());
+            dto.setGrade(c.getGrade());
+            dto.setPostDate(c.getPostDate() != null ? c.getPostDate().toString() : null);
+            dto.setPlusGrade(voteRepo.countByCommentIdAndValue(c.getId(), 1));
+            dto.setMinusGrade(voteRepo.countByCommentIdAndValue(c.getId(), -1));
+
+            if (c.getCategory() != null) {
+                dto.setCategory(CategoryDto.from(c.getCategory()));
+            }
+
+            return dto;
+        }).toList();
     }
 
     public Comment createComment(CommentCreateDto req, String mail) {
