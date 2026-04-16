@@ -62,9 +62,6 @@
               body: body
           });
 
-          const text = await res.text();
-          msg.innerText = text || (res.ok ? "Успешный вход" : "Ошибка входа");
-
           if (res.ok) {
               window.location.href = "profile.html";
           }

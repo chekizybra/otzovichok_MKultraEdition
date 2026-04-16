@@ -60,14 +60,29 @@
             </div>
 
             <div class="comment-tools">
-                <input type="text" id="searchTitle" placeholder="Поиск по заголовку">
-                <select id="sortSelect">
-                    <option value="date_desc">Сначала новые</option>
-                    <option value="date_asc">Сначала старые</option>
-                    <option value="grade_desc">Оценка по убыванию</option>
-                    <option value="grade_asc">Оценка по возрастанию</option>
-                </select>
-                <button class="primary-btn" onclick="loadComments()">Найти</button>
+                <div class="comment-tools-row">
+                    <input class="comment-search-input" type="text" id="searchTitle" placeholder="Поиск по заголовку">
+                    <input class="comment-date-input" type="date" id="dateFrom">
+                    <input class="comment-date-input" type="date" id="dateTo">
+                </div>
+
+                <div class="comment-tools-row">
+                    <select class="comment-select" id="sortSelect">
+                        <option value="date_desc">Сначала новые</option>
+                        <option value="date_asc">Сначала старые</option>
+                        <option value="grade_desc">Оценка по убыванию</option>
+                        <option value="grade_asc">Оценка по возрастанию</option>
+                    </select>
+
+                    <select class="comment-select" id="limitSelect">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+
+                    <button class="primary-btn" onclick="loadComments()">Найти</button>
+                </div>
             </div>
         </div>
         <div class="comments-grid" id="comments-list">
@@ -241,6 +256,21 @@
         }
     }
 
+    const searchTitle = document.getElementById("searchTitle");
+    const clearSearchBtn = document.getElementById("clearSearchBtn");
+
+    if (searchTitle && clearSearchBtn) {
+    searchTitle.addEventListener("input", () => {
+        clearSearchBtn.style.display = searchTitle.value ? "block" : "none";
+    });
+
+    clearSearchBtn.addEventListener("click", () => {
+        searchTitle.value = "";
+        clearSearchBtn.style.display = "none";
+        searchTitle.focus();
+        loadComments();
+    });
+}
 
     loadComments();
     checkAuth();

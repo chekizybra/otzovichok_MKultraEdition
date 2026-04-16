@@ -294,9 +294,16 @@ body {
 
 .comment-tools {
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.comment-tools-row {
+    display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    align-items: center;
+    justify-content: flex-end;
 }
 
 .comment-tools input,
@@ -307,6 +314,22 @@ body {
     background: #ffffff;
     font-size: 14px;
     color: #111827;
+}
+
+.comment-search-input {
+    min-width: 220px;
+}
+
+.comment-date-input {
+    min-width: 150px;
+}
+
+.comment-select {
+    min-width: 190px;
+}
+
+.comment-tools select {
+    min-width: 190px;
 }
 
 @media (max-width: 900px) {

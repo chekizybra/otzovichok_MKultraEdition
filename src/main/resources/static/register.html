@@ -64,15 +64,6 @@
               body: JSON.stringify({ fio, mail, pasword })
           });
 
-          const text = await res.text();
-
-          try {
-              const data = JSON.parse(text);
-              msg.innerText = data.message || "Готово";
-          } catch {
-              msg.innerText = text || "Готово";
-          }
-
           if (res.ok) {
               setTimeout(() => {
                   window.location.href = "login.html";
