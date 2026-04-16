@@ -20,8 +20,11 @@ public class CommentController {
     }
 
     @GetMapping("/my")
-    public List<CommentReadDto> getMyComments(Authentication authentication) {
-        return service.getMyCommentsDto(authentication.getName());
+    public List<CommentReadDto> getMyComments(
+            Authentication authentication,
+            @RequestParam(required = false, defaultValue = "date_desc") String sort
+    ) {
+        return service.getMyCommentsDto(authentication.getName(), sort);
     }
 
     @GetMapping
@@ -45,5 +48,10 @@ public class CommentController {
     @PostMapping
     public Comment addComment(@RequestBody CommentCreateDto req, Authentication authentication) {
         return service.createComment(req, authentication.getName());
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteComment(@PathVariable Long id, Authentication authentication) {
+        service.deleteMyComment(id, authentication.getName());
     }
 }

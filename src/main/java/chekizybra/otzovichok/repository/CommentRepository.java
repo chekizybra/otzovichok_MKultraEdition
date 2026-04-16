@@ -9,7 +9,6 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     //основные
     List<Comment> findAllByOrderByPostDateDesc();
-    List<Comment> findByUserMailOrderByPostDateDesc(String mail);
     //поиск
     List<Comment> findByTitleContainingIgnoreCase(String title);
     List<Comment> findByTitleContainingIgnoreCaseOrderByPostDateDesc(String title);
@@ -20,5 +19,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findAllByOrderByPostDateAsc();
     List<Comment> findAllByOrderByGradeDesc();
     List<Comment> findAllByOrderByGradeAsc();
+    //профиль
+    List<Comment> findByUserMailOrderByPostDateDesc(String mail);
+    List<Comment> findByUserMailOrderByPostDateAsc(String mail);
+    List<Comment> findByUserMailOrderByGradeDesc(String mail);
+    List<Comment> findByUserMailOrderByGradeAsc(String mail);
 }
 

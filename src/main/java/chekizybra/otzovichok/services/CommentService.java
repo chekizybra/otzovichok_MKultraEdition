@@ -50,8 +50,18 @@ public class CommentService {
         return repo.findById(id).orElse(null);
     }
 
-    public List<CommentReadDto> getMyCommentsDto(String mail) {
-        List<Comment> comments = repo.findByUserMailOrderByPostDateDesc(mail);
+    public List<CommentReadDto> getMyCommentsDto(String mail, String sort) {
+        List<Comment> comments;
+
+        if ("date_asc".equals(sort)) {
+            comments = repo.findByUserMailOrderByPostDateAsc(mail);
+        } else if ("grade_desc".equals(sort)) {
+            comments = repo.findByUserMailOrderByGradeDesc(mail);
+        } else if ("grade_asc".equals(sort)) {
+            comments = repo.findByUserMailOrderByGradeAsc(mail);
+        } else {
+            comments = repo.findByUserMailOrderByPostDateDesc(mail);
+        }
 
         return comments.stream().map(c -> {
             CommentReadDto dto = new CommentReadDto();
@@ -62,13 +72,29 @@ public class CommentService {
             dto.setPostDate(c.getPostDate() != null ? c.getPostDate().toString() : null);
             dto.setPlusGrade(voteRepo.countByCommentIdAndValue(c.getId(), 1));
             dto.setMinusGrade(voteRepo.countByCommentIdAndValue(c.getId(), -1));
-
             if (c.getCategory() != null) {
                 dto.setCategory(CategoryDto.from(c.getCategory()));
             }
-
             return dto;
         }).toList();
+    }
+
+    public void deleteMyComment(Long id, String mail) {
+        Comment comment = repo.findById(id).orElse(null);
+
+        if (comment == null) {
+            return;
+        }
+
+        if (comment.getUser() == null || comment.getUser().getMail() == null) {
+            return;
+        }
+
+        if (!comment.getUser().getMail().equals(mail)) {
+            return;
+        }
+
+        repo.deleteById(id);
     }
 
     public List<CommentReadDto> getCommentsDto(String title, String sort) {

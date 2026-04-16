@@ -76,10 +76,15 @@
       </div>
     </div>
 
-    <div class="tabs">
-      <button class="tab-btn active" onclick="showTab(this)">Мои комментарии</button>
+    <div class="comment-tools">
+      <select class="comment-select" id="profileSortSelect" onchange="loadMyComments()">
+        <option value="date_desc">Сначала новые</option>
+        <option value="date_asc">Сначала старые</option>
+        <option value="grade_desc">Оценка по убыванию</option>
+        <option value="grade_asc">Оценка по возрастанию</option>
+      </select>
     </div>
-
+    
     <div class="comments-grid" id="my-comments">
       <div class="empty">Загрузка...</div>
     </div>
@@ -108,61 +113,53 @@
   }
 
   async function loadProfile() {
-      const res = await fetch("http://localhost:8080/profile", {
-          method: "GET",
-          credentials: "include",
-          headers: {
-              "X-Requested-With": "XMLHttpRequest"
+      try {
+          const res = await fetch("http://localhost:8080/profile", {
+              method: "GET",
+              credentials: "include",
+              headers: {
+                  "X-Requested-With": "XMLHttpRequest"
+              }
+          });
+
+          if (res.status === 401 || res.status === 403) {
+              window.location.href = "login.html";
+              return false;
           }
-      });
 
-      if (res.status === 401 || res.status === 403) {
+          if (!res.ok) {
+              window.location.href = "login.html";
+              return false;
+          }
+
+          const data = await res.json();
+          currentUser = data;
+
+          const fio = safe(data.fio, "Без имени");
+          const mail = safe(data.mail, "-");
+
+          document.getElementById("fio").innerText = fio;
+          document.getElementById("mail").innerText = mail;
+          document.getElementById("welcome-name").innerText = "Привет, " + fio;
+
+          const avatarLetter = fio.trim().length > 0 ? fio.trim()[0].toUpperCase() : "?";
+          document.getElementById("avatar").innerText = avatarLetter;
+
+          return true;
+      } catch (e) {
           window.location.href = "login.html";
           return false;
       }
-
-      if (!res.ok) {
-          window.location.href = "login.html";
-          return false;
-      }
-
-      const data = await res.json();
-      currentUser = data;
-
-      const fio = safe(data.fio, "Без имени");
-      const mail = safe(data.mail, "-");
-
-      document.getElementById("fio").innerText = fio;
-      document.getElementById("mail").innerText = mail;
-      document.getElementById("welcome-name").innerText = "Привет, " + fio;
-
-      const avatarLetter = fio.trim().length > 0 ? fio.trim()[0].toUpperCase() : "?";
-      document.getElementById("avatar").innerText = avatarLetter;
-
-      return true;
-  }
-
-  function isMyComment(comment) {
-    if (!currentUser || !comment) return false;
-
-    if (comment.user) {
-        if (currentUser.id && comment.user.id && Number(comment.user.id) === Number(currentUser.id)) return true;
-        if (currentUser.mail && comment.user.mail && currentUser.mail === comment.user.mail) return true;
-        if (currentUser.fio && comment.user.fio && currentUser.fio === comment.user.fio) return true;
-    }
-
-    if (comment.user_id && currentUser.id && Number(comment.user_id) === Number(currentUser.id)) return true;
-
-    return false;
   }
 
   async function loadMyComments() {
       const box = document.getElementById("my-comments");
+      const sort = document.getElementById("profileSortSelect")?.value || "date_desc";
 
       try {
-          const res = await fetch("http://localhost:8080/comments/my", {
-          method: "GET",
-          credentials: "include"
+          const res = await fetch("http://localhost:8080/comments/my?sort=" + encodeURIComponent(sort), {
+              method: "GET",
+              credentials: "include"
           });
 
           if (!res.ok) {
@@ -224,9 +221,15 @@
                       <div class="comment-text">${text}</div>
 
                       <div class="comment-footer">
-                          <div class="rate">Оценка: ${grade}</div>
-                          <div class="rate">👍 ${plus}</div>
-                          <div class="rate">👎 ${minus}</div>
+                          <div class="rates">
+                              <div class="rate">Оценка: ${grade}</div>
+                              <div class="rate">👍 ${plus}</div>
+                              <div class="rate">👎 ${minus}</div>
+                          </div>
+
+                          <div class="comment-actions">
+                              <button class="delete-btn" onclick="deleteComment(${c.id})">Удалить</button>
+                          </div>
                       </div>
                   </div>
               `;
@@ -236,7 +239,36 @@
       }
   }
 
+  async function deleteComment(id) {
+      const ok = confirm("Удалить комментарий? Это действие нельзя отменить.");
+
+      if (!ok) {
+          return;
+      }
+
+      try {
+          const res = await fetch(`http://localhost:8080/comments/${id}`, {
+              method: "DELETE",
+              credentials: "include"
+          });
+
+          if (res.ok) {
+              await loadMyComments();
+          } else {
+              alert("Не удалось удалить комментарий");
+          }
+      } catch (e) {
+          alert("Ошибка при удалении");
+      }
+  }
+
   async function logout() {
+      const ok = confirm("Выйти из аккаунта?");
+
+      if (!ok) {
+          return;
+      }
+
       try {
           await fetch("http://localhost:8080/auth/logout", {
               method: "POST",
