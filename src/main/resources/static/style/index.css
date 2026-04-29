@@ -338,6 +338,11 @@ body {
     }
 }
 
+.comment-title-link {
+    text-decoration: none;
+    color: inherit;
+}
+
 @media (max-width: 600px) {
     .wrap {
         padding: 16px;
