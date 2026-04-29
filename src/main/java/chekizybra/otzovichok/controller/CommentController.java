@@ -20,7 +20,7 @@ public class CommentController {
     }
 
     @GetMapping("/my")
-    public List<CommentReadDto> getCurUserComments(
+    public List<CommentReadDto> getMyComments(
             Authentication authentication,
             @RequestParam(required = false, defaultValue = "date_desc") String sort
     ) {
@@ -33,6 +33,11 @@ public class CommentController {
             @RequestParam(required = false, defaultValue = "date_desc") String sort
     ) {
         return service.getCommentsDto(title, sort);
+    }
+
+    @GetMapping("/{id}")
+    public CommentReadDto getCommentById(@PathVariable Long id) {
+        return service.getCommentDto(id);
     }
 
     @PostMapping("/{id}/upvote")

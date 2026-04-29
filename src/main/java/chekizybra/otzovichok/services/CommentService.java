@@ -42,12 +42,45 @@ public class CommentService {
         return repo.findAllByOrderByPostDateDesc().stream().map(c -> {
             long plus = voteRepo.countByCommentIdAndValue(c.getId(), 1);
             long minus = voteRepo.countByCommentIdAndValue(c.getId(), -1);
-            return CommentReadDto.from(c, plus, minus);
+            CommentReadDto dto = CommentReadDto.from(c, plus, minus);
+            dto.setCategoryPath(buildCategoryPath(c.getCategory()));
+            return dto;
         }).toList();
     }
 
     public Comment getComment(Long id) {
         return repo.findById(id).orElse(null);
+    }
+
+    public CommentReadDto getCommentDto(Long id) {
+        Comment c = repo.findById(id).orElse(null);
+
+        if (c == null) {
+            return null;
+        }
+
+        long plus = voteRepo.countByCommentIdAndValue(c.getId(), 1);
+        long minus = voteRepo.countByCommentIdAndValue(c.getId(), -1);
+
+        CommentReadDto dto = CommentReadDto.from(c, plus, minus);
+        dto.setCategoryPath(buildCategoryPath(c.getCategory()));
+        return dto;
+    }
+
+    public String buildCategoryPath(Category category) {
+        if (category == null) {
+            return "";
+        }
+
+        String path = category.getCategory();
+        Category current = category.getParent();
+
+        while (current != null) {
+            path = current.getCategory() + " -> " + path;
+            current = current.getParent();
+        }
+
+        return path;
     }
 
     public List<CommentReadDto> getMyCommentsDto(String mail, String sort) {
@@ -75,6 +108,7 @@ public class CommentService {
             if (c.getCategory() != null) {
                 dto.setCategory(CategoryDto.from(c.getCategory()));
             }
+            dto.setCategoryPath(buildCategoryPath(c.getCategory()));
             return dto;
         }).toList();
     }
@@ -138,6 +172,8 @@ public class CommentService {
                 dto.setCategory(CategoryDto.from(c.getCategory()));
             }
 
+            dto.setCategoryPath(buildCategoryPath(c.getCategory()));
+
             return dto;
         }).toList();
     }
@@ -166,21 +202,14 @@ public class CommentService {
     }
 
     public Comment upvote(Long commentId, String mail) {
-        System.out.println("auth = " + mail);
-
         Comment c = getComment(commentId);
         User u = userRepo.findByMail(mail).orElse(null);
-
-        System.out.println("comment = " + c);
-        System.out.println("user = " + u);
 
         if (c == null || u == null) {
             return null;
         }
 
         Vote v = voteRepo.findByUserIdAndCommentId(u.getId(), c.getId()).orElse(null);
-
-        System.out.println("vote = " + v);
 
         if (v == null) {
             v = new Vote();

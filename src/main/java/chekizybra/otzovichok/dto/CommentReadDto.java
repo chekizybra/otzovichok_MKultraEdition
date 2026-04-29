@@ -14,6 +14,7 @@ public class CommentReadDto {
     private Long plusGrade;
     private Long minusGrade;
     private CategoryDto category;
+    private String categoryPath;
     public static CommentReadDto from(Comment c, long plus, long minus) {
         CommentReadDto dto = new CommentReadDto();
         dto.setId(c.getId());
