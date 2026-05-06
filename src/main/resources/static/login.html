@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Вход</title>
   <link rel="stylesheet" href="style/login.css">
+  <script src="js/login.js">
 </head>
 <body>
 <div class="wrap">
@@ -34,41 +35,5 @@
     </div>
   </div>
 </div>
-
-<script>
-  async function login() {
-      const msg = document.getElementById("msg");
-      msg.innerText = "";
-
-      const mail = document.getElementById("mail").value.trim();
-      const pasword = document.getElementById("pasword").value;
-
-      if (!mail || !pasword) {
-          msg.innerText = "Заполните все поля";
-          return;
-      }
-
-      const body = new URLSearchParams();
-      body.append("username", mail);
-      body.append("password", pasword);
-
-      try {
-          const res = await fetch("http://localhost:8080/auth/login", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/x-www-form-urlencoded"
-              },
-              credentials: "include",
-              body: body
-          });
-
-          if (res.ok) {
-              window.location.href = "profile.html";
-          }
-      } catch (e) {
-          msg.innerText = "Ошибка соединения с сервером";
-      }
-  }
-</script>
 </body>
 </html>
